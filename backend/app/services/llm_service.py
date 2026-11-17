@@ -39,7 +39,7 @@ class LLMService:
         self,
         messages: list[ChatMessage],
         temperature: float = 0.7,
-        num_predict: int = 500,
+        num_predict: int = 1000,
     ) -> ChatResponse:
         """Call Ollama /api/chat and return the assistant message."""
         import time

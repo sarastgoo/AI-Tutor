@@ -7,6 +7,8 @@ from app.api.v1 import (
     embeddings,
     health,
     retrieval,
+    speaking,
+    speech,
     tutor,
     vocabulary,
 )
@@ -19,3 +21,5 @@ api_router.include_router(vocabulary.router)
 api_router.include_router(embeddings.router)
 api_router.include_router(retrieval.router)
 api_router.include_router(tutor.router)
+api_router.include_router(speech.router)
+api_router.include_router(speaking.router)
