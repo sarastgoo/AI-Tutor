@@ -15,6 +15,7 @@ class LibraryResponse(BaseModel):
     name: str
     root_path: str
     status: str
+    book_id: uuid.UUID | None  # ✅ این فیلد را اضافه کنید
     created_at: datetime
     updated_at: datetime
 

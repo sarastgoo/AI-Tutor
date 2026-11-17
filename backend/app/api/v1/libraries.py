@@ -24,7 +24,6 @@ router = APIRouter(tags=["libraries"])
     response_model=LibraryResponse,
     status_code=status.HTTP_201_CREATED,
 )
-
 async def create_library(body: LibraryCreate, session: SessionDep) -> Library:
     """Create a new library pointing to a local folder."""
     svc = LibraryService(session)
