@@ -114,3 +114,92 @@ class IngestionService:
 
         await self._session.flush()
         return count
+
+    async def register_audio_file(
+        self, book: Book, audio_path: Path, relative_path: str | None = None
+    ) -> SourceFile:
+        """Register an audio file as a source file."""
+        sha = self._sha256_file(audio_path)
+        rel = relative_path or audio_path.name
+
+        # Dedup by hash
+        stmt = select(SourceFile).where(
+            SourceFile.book_id == book.id,
+            SourceFile.sha256 == sha,
+        )
+        result = await self._session.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if existing is not None:
+            return existing
+
+        # Determine media type from extension
+        ext = audio_path.suffix.lower()
+        media_type_map = {
+            ".mp3": "audio/mpeg",
+            ".wav": "audio/wav",
+            ".m4a": "audio/mp4",
+            ".ogg": "audio/ogg",
+        }
+        media_type = media_type_map.get(ext)
+        if media_type is None:
+            raise ValueError(f"Unsupported audio extension: {ext}")
+
+        # Get duration
+        from app.services.stt_service import STTService
+        stt = STTService()
+        duration_ms = stt.get_duration_ms(audio_path)
+
+        src = SourceFile(
+            book_id=book.id,
+            relative_path=rel,
+            media_type=media_type,
+            sha256=sha,
+            duration_ms=duration_ms,
+            status="stt_pending",
+        )
+        self._session.add(src)
+        await self._session.flush()
+        return src
+
+    async def ingest_audio(
+        self, source_file: SourceFile, audio_path: Path
+    ) -> int:
+        """Transcribe audio and persist AudioTrack + AudioSegments. Returns segment count."""
+        from app.services.stt_service import STTService
+        from app.models.audio import AudioSegment, AudioTrack
+
+        # Create track
+        track = AudioTrack(
+            source_file_id=source_file.id,
+            label=audio_path.stem,  # filename without extension
+            duration_ms=source_file.duration_ms or 0,
+            transcription_status="in_progress",
+        )
+        self._session.add(track)
+        await self._session.flush()
+
+        # Transcribe
+        stt = STTService()
+        result = stt.transcribe(audio_path)
+
+        # Persist segments
+        for seg in result.segments:
+            self._session.add(
+                AudioSegment(
+                    track_id=track.id,
+                    segment_index=seg.segment_index,
+                    start_ms=seg.start_ms,
+                    end_ms=seg.end_ms,
+                    raw_transcript=seg.text,
+                    corrected_transcript=None,
+                    transcript_version=1,
+                    confidence=seg.confidence,
+                )
+            )
+
+        # Update statuses
+        track.transcription_status = "completed"
+        source_file.status = "stt_completed"
+        await self._session.flush()
+
+        return len(result.segments)
