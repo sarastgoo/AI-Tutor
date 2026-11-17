@@ -1,0 +1,26 @@
+# Top-level unpinned dependencies (for development)
+# Locked versions live in requirements-p0.lock.txt (P0) and future lockfiles.
+
+# --- P0 runtime (already installed & tested) ---
+pymupdf>=2.0
+sentence-transformers>=6.0
+paddlepaddle>=3.3
+paddleocr>=3.7
+faster-whisper>=1.2
+piper-tts>=1.8
+requests>=2.34
+psutil>=7.2
+av>=18,<19
+
+# --- P1 backend ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.10
+pydantic-settings>=2.5
+sqlalchemy[asyncio]>=2.0
+asyncpg>=0.29
+psycopg[binary]>=3.2
+alembic>=1.13
+structlog>=24.0
+python-multipart>=0.0.9
+python-dotenv>=1.0

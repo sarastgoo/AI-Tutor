@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project-specific
+storage/
+benchmark-results/
+models/
+*.log
+*.sqlite
+*.db
+
+# Ollama / Models
+*.onnx
+*.gguf
+scripts/voices/*.onnx
+scripts/voices/*.onnx.json
+
+# But keep fixtures (they're small and useful for tests)
+!scripts/fixtures/*.pdf
+!scripts/fixtures/*.mp3
+
+# Docker
+postgres_data/
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+
+# Lock files (keep these!)
+# requirements-p0.lock.txt is tracked

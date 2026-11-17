@@ -1,0 +1,24 @@
+"""Tests for health endpoints."""
+import pytest
+from httpx import AsyncClient
+
+
+@pytest.mark.asyncio
+async def test_health_returns_ok(client: AsyncClient) -> None:
+    resp = await client.get("/api/v1/health")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["status"] == "ok"
+    assert body["version"] == "0.1.0"
+    assert body["environment"] == "dev"
+
+
+@pytest.mark.asyncio
+async def test_health_db_returns_ok(client: AsyncClient) -> None:
+    resp = await client.get("/api/v1/health/db")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["status"] == "ok"
+    assert body["db"] == "connected"
+    assert body["postgres_version"] is not None
+    assert body["pgvector_version"] is not None
