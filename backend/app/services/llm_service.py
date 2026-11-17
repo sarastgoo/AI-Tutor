@@ -39,7 +39,8 @@ class LLMService:
         self,
         messages: list[ChatMessage],
         temperature: float = 0.7,
-        num_predict: int = 1000,
+        num_predict: int = 500,
+        format: str | None = None,  # <--- پارامتر جدید
     ) -> ChatResponse:
         """Call Ollama /api/chat and return the assistant message."""
         import time
@@ -54,6 +55,9 @@ class LLMService:
                 "num_predict": num_predict,
             },
         }
+        if format is not None:
+            payload["format"] = format  # <--- اضافه کردن به payload
+
         async with httpx.AsyncClient(timeout=180.0) as client:
             resp = await client.post(
                 f"{self._base_url}/api/chat", json=payload

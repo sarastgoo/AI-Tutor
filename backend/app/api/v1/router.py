@@ -5,6 +5,7 @@ from app.api.v1 import (
     audio,
     books,
     embeddings,
+    enrichment,
     exports,
     health,
     progress,
@@ -27,3 +28,4 @@ api_router.include_router(speech.router)
 api_router.include_router(speaking.router)
 api_router.include_router(exports.router)
 api_router.include_router(progress.router)
+api_router.include_router(enrichment.router)
