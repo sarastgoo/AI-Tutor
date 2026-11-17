@@ -38,8 +38,6 @@ app = FastAPI(
     redoc_url=None,
 )
 
-
-# CORS: only loopback frontend in dev
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -54,7 +52,6 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_correlation_id(request: Request, call_next):
-    """Attach a request ID for structured logging."""
     import uuid
 
     request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
@@ -66,11 +63,9 @@ async def add_correlation_id(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Return structured error envelope and log the full traceback."""
     import traceback
-    request_id = getattr(request.state, "request_id", None)
 
-    # Log full traceback for debugging
+    request_id = getattr(request.state, "request_id", None)
     tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
     log.error(
         "unhandled_exception",
@@ -79,8 +74,6 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         path=str(request.url),
         traceback=tb,
     )
-
-    # Return safe message to client (don't leak details in prod)
     detail = str(exc) if settings.ENVIRONMENT != "prod" else "An unexpected error occurred."
     return JSONResponse(
         status_code=500,

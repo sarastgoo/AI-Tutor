@@ -8,6 +8,7 @@ from app.api.v1 import (
     enrichment,
     exports,
     health,
+    libraries,
     progress,
     retrieval,
     speaking,
@@ -29,3 +30,4 @@ api_router.include_router(speaking.router)
 api_router.include_router(exports.router)
 api_router.include_router(progress.router)
 api_router.include_router(enrichment.router)
+api_router.include_router(libraries.router)

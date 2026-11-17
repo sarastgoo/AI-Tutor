@@ -52,7 +52,7 @@ class IngestionService:
         sha = self._sha256_file(pdf_path)
         rel = relative_path or pdf_path.name
 
-        # Check for existing file with same hash in the same book
+        # 1. Check for existing file with same hash in the same book
         stmt = select(SourceFile).where(
             SourceFile.book_id == book.id,
             SourceFile.sha256 == sha,
@@ -62,7 +62,17 @@ class IngestionService:
         if existing is not None:
             return existing
 
-        # Import pymupdf here to count pages
+        # 2. Check for existing file with same relative_path
+        stmt2 = select(SourceFile).where(
+            SourceFile.book_id == book.id,
+            SourceFile.relative_path == rel,
+        )
+        result2 = await self._session.execute(stmt2)
+        existing_path = result2.scalar_one_or_none()
+        if existing_path is not None:
+            return existing_path
+
+        # 3. Create new
         import pymupdf
         doc = pymupdf.open(pdf_path)
         page_count = doc.page_count
@@ -118,11 +128,10 @@ class IngestionService:
     async def register_audio_file(
         self, book: Book, audio_path: Path, relative_path: str | None = None
     ) -> SourceFile:
-        """Register an audio file as a source file."""
+        """Register an audio file (deduplicated)."""
         sha = self._sha256_file(audio_path)
         rel = relative_path or audio_path.name
 
-        # Dedup by hash
         stmt = select(SourceFile).where(
             SourceFile.book_id == book.id,
             SourceFile.sha256 == sha,
@@ -132,7 +141,15 @@ class IngestionService:
         if existing is not None:
             return existing
 
-        # Determine media type from extension
+        stmt2 = select(SourceFile).where(
+            SourceFile.book_id == book.id,
+            SourceFile.relative_path == rel,
+        )
+        result2 = await self._session.execute(stmt2)
+        existing_path = result2.scalar_one_or_none()
+        if existing_path is not None:
+            return existing_path
+
         ext = audio_path.suffix.lower()
         media_type_map = {
             ".mp3": "audio/mpeg",
@@ -140,11 +157,8 @@ class IngestionService:
             ".m4a": "audio/mp4",
             ".ogg": "audio/ogg",
         }
-        media_type = media_type_map.get(ext)
-        if media_type is None:
-            raise ValueError(f"Unsupported audio extension: {ext}")
+        media_type = media_type_map.get(ext, "audio/mpeg")
 
-        # Get duration
         from app.services.stt_service import STTService
         stt = STTService()
         duration_ms = stt.get_duration_ms(audio_path)
